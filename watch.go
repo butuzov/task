@@ -16,7 +16,7 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
-const watchInterval = 5 * time.Second
+const watchInterval = time.Second
 
 // watchTasks start watching the given tasks
 func (e *Executor) watchTasks(calls ...taskfile.Call) error {
