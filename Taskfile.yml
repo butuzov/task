@@ -25,6 +25,12 @@ tasks:
     cmds:
       - go install -v -ldflags="-w -s -X main.version={{.GIT_COMMIT}}" ./cmd/task
 
+  build:
+    - go build -v -ldflags="-w -s -X main.version={{.GIT_COMMIT}}" -o taska ./cmd/task
+    - cmd: unlink ~/.dotfiles/bin/taska
+      ignore_error: true
+    - mv ./taska ~/.dotfiles/bin
+
   mod:
     desc: Downloads and tidy Go modules
     cmds:
