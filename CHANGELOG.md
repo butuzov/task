@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+- A significant performance boost was achieved for large Taskfiles (monorepos)
+  by skipping templating altogether when the string is static (#2820 by @romnn).
+- Added `absPath` template function that resolves a path to its absolute form,
+  cleaning `..` and `.` components (#2681, #2788 by @mateenanjum).
+
+## v3.50.0 - 2026-04-13
+
+- Added `enum.ref` support in `requires`: enum constraints can now reference
+  variables or template pipelines (e.g., `ref: .ALLOWED_ENVS`) instead of
+  duplicating static lists. Combined with `sh:` variables, this enables fully
+  dynamic enum validation (#2678 by @vmaerten).
+- Fixed Fish completion using hardcoded `task` binary name instead of
+  `$GO_TASK_PROGNAME` for experiments cache (#2730, #2727 by @SergioChan).
+- Fixed watch mode ignoring SIGHUP signal, causing the watcher to exit instead
+  of restarting (#2764, #2642).
+- Fixed a long time bug where the task wouldn't re-run as it should when using
+  `method: timestamp` and the files listed on `generates:` were deleted.
+  This makes `method: timestamp` behaves the same as `method: checksum`
+  (#1230, #2716 by @drichardson).
+
 ## v3.49.1 - 2026-03-08
 
 * Reverted #2632 for now, which caused some regressions. That change will be
