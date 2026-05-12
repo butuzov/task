@@ -16,7 +16,7 @@ const maxInterruptSignals = 3
 func (e *Executor) InterceptInterruptSignals() {
 	ch := make(chan os.Signal, maxInterruptSignals)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-
+	e.Logger.Outf(logger.Yellow, "task: Signal waiting: %d\n", maxInterruptSignals)
 	go func() {
 		for i := range maxInterruptSignals {
 			sig := <-ch

@@ -10,6 +10,23 @@ import (
 	"github.com/go-task/task/v3/taskfile/ast"
 )
 
+func GlobsCompile(dir string, globs []*ast.Glob) map[string]*bool {
+	resultMap := make(map[string]*bool)
+	for _, g := range globs {
+		matches, err := glob(dir, g.Glob)
+		if err != nil {
+			continue
+		}
+		for _, match := range matches {
+			if val, exists := resultMap[match]; !exists || !*val {
+				resultMap[match] = &g.Negate
+			}
+		}
+	}
+
+	return resultMap
+}
+
 func Globs(dir string, globs []*ast.Glob) ([]string, error) {
 	resultMap := make(map[string]bool)
 	for _, g := range globs {

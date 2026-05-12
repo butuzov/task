@@ -68,6 +68,15 @@ func (e *Executor) watchTasks(calls ...*Call) error {
 
 	closeOnInterrupt(w)
 
+	sources, err := e.collectSourcesRules(calls)
+	if err != nil {
+		cancel()
+	}
+
+	for k, val := range sources {
+		e.Logger.VerboseErrf(logger.Red, "task:  %s => %t\n", k, *val)
+	}
+
 	go func() {
 		for {
 			select {
@@ -77,6 +86,18 @@ func (e *Executor) watchTasks(calls ...*Call) error {
 					return
 				}
 				e.Logger.VerboseErrf(logger.Magenta, "task: received watch event: %v\n", event)
+
+				if val, ok := sources[event.Name]; !ok || *val {
+					if !ok {
+						e.Logger.VerboseErrf(logger.Magenta, "task: received watch event ignored: no matching patterns \n")
+					} else if *val {
+						e.Logger.VerboseErrf(logger.Magenta, "task: received watch event ignored: excluded\n")
+					}
+
+					continue
+				} else {
+					e.Logger.VerboseErrf(logger.Yellow, "task: continue with event: %s\n", event.Name)
+				}
 
 				cancel()
 				ctx, cancel = context.WithCancel(context.Background())
@@ -106,6 +127,7 @@ func (e *Executor) watchTasks(calls ...*Call) error {
 							e.Logger.VerboseErrf(logger.Magenta, "task: skipped for file not in sources: %s\n", relPath)
 							return
 						}
+
 						err = e.RunTask(ctx, c)
 						if err == nil {
 							e.Logger.Errf(logger.Green, "task: task \"%s\" finished running\n", c.Task)
@@ -199,6 +221,35 @@ func ShouldIgnore(path string) bool {
 		}
 	}
 	return false
+}
+
+func (e *Executor) collectSourcesRules(calls []*Call) (map[string]*bool, error) {
+	var sources = make(map[string]*bool)
+
+	err := e.traverse(calls, func(task *ast.Task) error {
+
+		for _, kv := range task.Sources {
+			e.Logger.VerboseOutf(logger.Cyan, "task: glob [%#v]\n", kv)
+		}
+
+		files := fingerprint.GlobsCompile(task.Dir, task.Sources)
+
+		for file, neg := range files {
+			if _, ok := sources[file]; !ok {
+				// e.Logger.VerboseOutf(logger.BrightCyan, "task: [%s] not exists\n", file)
+				sources[file] = neg
+			} else {
+				e.Logger.VerboseOutf(logger.Cyan, "task: [%s] exists\n", file)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sources, nil
 }
 
 func (e *Executor) collectSources(calls []*Call) ([]string, error) {
